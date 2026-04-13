@@ -1,0 +1,15 @@
+# 1. 前端忽略项
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# 2. 后端忽略项
+backend/__pycache__/
+backend/venv/
+backend/.venv/
+backend/.env
+
+# 3. 编辑器及系统垃圾
+.vscode/
+.idea/
+.DS_Store

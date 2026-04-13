@@ -1,0 +1,46 @@
+如何导出虚拟环境？
+pip freeze > requirements.txt        
+
+quickly start
+启动后端
+cd backend
+# 可选操作（#标注的为可选操作）
+# 激活虚拟环境： .\venv\Scripts\activate
+# 确保依赖：     pip install -r requirements.txt
+uvicorn main:app --reload
+# 测试方式：http://127.0.0.1:8000/docs
+启动前端
+cd frontend
+# 可选操作 （#标注的为可选操作）
+# npm install
+npm run dev
+
+框架介绍：
+前端位于frontend文件夹下
+frontend/src/
+├── main.js              # 全局配置 (引入 Element Plus)
+├── App.vue              # 根组件 (只留一个壳子)
+├── api/                 # (网络请求区：所有后端接口在这里统一管理)
+│   └── chatApi.js
+├── views/               # (页面区：分给不同的人写)
+│   ├── ChatView.vue     # 聊天主页面
+│   ├── LoginView.vue    # 登录页面
+│   └── PracticeView.vue # 刷题页面
+└── components/          # (公共组件区)
+    ├── ChatBox.vue      # 你封装好的漂亮对话框
+    └── SideBar.vue      # 左侧导航栏
+
+后端位于backend文件夹下
+backend/
+├── main.py              # (只负责启动和注册路由)
+├── requirements.txt
+├── core/                # (核心配置区)
+│   └── config.py        # 存放 API_KEY、数据库密码等配置
+└── api/                 # (接口区：按功能分给不同的人)
+    ├── __init__.py
+    ├── chat.py          # 同学A负责：处理AI对话
+    ├── user.py          # 同学B负责：处理登录注册
+    └── practice.py      # 同学C负责：处理刷题逻辑
+|__ .env                 # 存放apikey，并且在git时被忽略，这样可以保证key的安全   
+
+数据库用的sqlite
