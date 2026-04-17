@@ -33,13 +33,14 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
+// 👇 1. 告别直接 import axios，引入我们自己封装的业务 API
+import { authApi } from '../api/auth.js' 
 
 const router = useRouter()
 
 // 状态管理
-const isLoginMode = ref(true) // 默认是登录模式，false 则是注册模式
+const isLoginMode = ref(true) 
 const username = ref('')
 const password = ref('')
 const errorMessage = ref('')
@@ -60,32 +61,20 @@ const handleSubmit = async () => {
   
   try {
     if (isLoginMode.value) {
-      // ==========================================
-      // 【模式 A：登录】必须按 OAuth2 标准打包成 Form 表单
-      // ==========================================
-      const params = new URLSearchParams()
-      params.append('username', username.value)
-      params.append('password', password.value)
-
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/login', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      })
-
+      // 👇 2. 代码变得极其清爽，就像读英语句子一样
+      const response = await authApi.login(username.value, password.value)
+      
       const token = response.data.access_token
       localStorage.setItem('token', token)
       router.push('/chat') // 登录成功，进大厅
       
     } else {
-      // ==========================================
-      // 【模式 B：注册】普通 API 接口，直接发 JSON 即可
-      // ==========================================
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/register', {
-        username: username.value,
-        password: password.value
-      })
+      // 👇 3. 注册也一样优雅
+      const response = await authApi.register(username.value, password.value)
       
       // 注册成功后，绿字提示用户，并自动切回登录页面让他登录
-      successMessage.value = response.data.msg
+      // 如果后端没返回 msg，就给个兜底文案
+      successMessage.value = response.data.msg || '注册成功，请登录！' 
       isLoginMode.value = true 
     }
     

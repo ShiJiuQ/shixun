@@ -42,7 +42,7 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { Promotion, User, ChatDotRound, Monitor } from '@element-plus/icons-vue'
-import chatApi from '../api/chatApi'
+import chatApi from '../api/chat'
 
 const userInput = ref('')
 const messages = ref([{ role: 'assistant', content: '你好，我是研途 Buddy！准备好开始今天的 408 复习了吗？' }])

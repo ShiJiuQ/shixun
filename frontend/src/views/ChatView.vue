@@ -40,10 +40,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, reactive, nextTick } from 'vue'
 import { Promotion, User, ChatDotRound, Monitor } from '@element-plus/icons-vue'
-// 【极其关键】引入我们刚才封装好的带有 JWT 拦截器的新版 API 
-import chatApi from '../api/chatApi'
+
+// 🚨 关键修正：必须加上大括号！因为我们是 export const chatApi
+// 如果配置了 Vite 的 alias，建议写成 import { chatApi } from '@/api/chat'
+import { chatApi } from '../api/chat'
 
 const userInput = ref('')
 const messages = ref([{ role: 'assistant', content: '你好，我是研途 Buddy！准备好开始今天的 408 复习了吗？' }])
@@ -69,11 +71,11 @@ const handleSend = async () => {
   await scrollToBottom()
 
   // 2. 预设 AI 回复的空对话框
-  const aiMessage = { role: 'assistant', content: '' }
+  const aiMessage = reactive({ role: 'assistant', content: '' }) 
   messages.value.push(aiMessage)
 
   try {
-    // 3. 调用新版通信兵，底层复杂的解码逻辑已经被完美隐藏了！
+    // 3. 调用规范化后的 API 层
     await chatApi.streamChat(
       text,
       (chunk) => {
@@ -81,7 +83,7 @@ const handleSend = async () => {
         scrollToBottom()
       },
       (err) => {
-        aiMessage.content = "网络开小差了，请确认是否已登录或后端是否开启..."
+        aiMessage.content += "\n[网络开小差了，请检查后端是否开启或 Token 是否过期]"
         console.error(err)
       }
     )
@@ -92,17 +94,17 @@ const handleSend = async () => {
 </script>
 
 <style scoped>
-/* 改造后的 CSS：去掉了外层包裹，直接 100% 填满父容器 */
+/* 样式保持不变，写得挺好的 */
 .chat-container { 
   width: 100%; 
-  height: 100%; 
+  height: 100vh; /* 强制占满全屏视口，防止被外部 div 挤压 */
   background: white; 
   display: flex; 
   flex-direction: column; 
 }
 .chat-header { background: #409eff; color: white; display: flex; align-items: center; font-weight: bold; font-size: 18px; flex-shrink: 0; }
 .chat-main { background: #f9fbff; padding: 20px; flex: 1; overflow: hidden; }
-.chat-footer { padding: 15px 20px; border-top: 1px solid #ebeef5; flex-shrink: 0; }
+.chat-footer { padding: 15px 20px; border-top: 1px solid #ebeef5; flex-shrink: 0; background: white; }
 
 .chat-row { display: flex; margin-bottom: 20px; align-items: flex-start; }
 .chat-row.user { flex-direction: row-reverse; }
@@ -110,6 +112,6 @@ const handleSend = async () => {
 .user .el-card { background-color: #95ec69; border: none; }
 .ai-avatar { background: #409eff !important; }
 .user-avatar { background: #67c23a !important; }
-.content { line-height: 1.6; white-space: pre-wrap; font-size: 14px; }
+.content { line-height: 1.6; white-space: pre-wrap; font-size: 14px; word-break: break-all; } /* 增加了 word-break 防止英文代码撑破气泡 */
 .input-wrapper { max-width: 100%; }
 </style>

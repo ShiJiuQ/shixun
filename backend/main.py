@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import chat, auth 
-import models
-from database import engine
-models.Base.metadata.create_all(bind=engine)
+from app.db.database import engine, Base
+from app.models.user import User, ChatMessage
+
+# 【一键建表】在 MySQL 中自动创建所有继承了 Base 的表
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 app.add_middleware(

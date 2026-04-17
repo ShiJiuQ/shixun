@@ -18,29 +18,54 @@ npm run dev
 框架介绍：
 前端位于frontend文件夹下
 frontend/src/
-├── main.js              # 全局配置 (引入 Element Plus)
-├── App.vue              # 根组件 (只留一个壳子)
-├── api/                 # (网络请求区：所有后端接口在这里统一管理)
-│   └── chatApi.js
-├── views/               # (页面区：分给不同的人写)
+├── assets/             # 静态资源：图片、图标、全局样式表 (CSS/SCSS)
+├── api/                # 🔌 API 路由层：专门存放与后端对接的 axios 请求
+│   ├── auth.js         # 登录、注册相关接口
+│   ├── chat.js         # AI 对话相关接口
+│   └── practice.js     # 题库、刷题相关接口
+├── components/         # 🧩 公共组件：可复用的“小零件”（如：自定义按钮、输入框、AI气泡）
+│   ├── ChatBox.vue      # 你封装好的漂亮对话框
+│   └── SideBar.vue      # 左侧导航栏
+├── views/              # 页面视图：具体的业务页面（一个路由对应一个文件）
 │   ├── ChatView.vue     # 聊天主页面
 │   ├── LoginView.vue    # 登录页面
 │   └── PracticeView.vue # 刷题页面
-└── components/          # (公共组件区)
-    ├── ChatBox.vue      # 你封装好的漂亮对话框
-    └── SideBar.vue      # 左侧导航栏
+├── router/             # 路由配置：定义 URL 路径与页面的映射关系
+├── store/              # 📦 状态管理：存放全局数据（如：当前用户信息、Token）
+├── utils/              # 🛠️ 工具类：axios 拦截器、时间格式化、本地存储管理
+│   └── request.js      # axios 封装（统一处理 Token 和 401 报错）
+├── App.vue             # 根组件
+└── main.js             # 项目入口文件
 
 后端位于backend文件夹下
 backend/
-├── main.py              # (只负责启动和注册路由)
-├── requirements.txt
-├── core/                # (核心配置区)
-│   └── config.py        # 存放 API_KEY、数据库密码等配置
-└── api/                 # (接口区：按功能分给不同的人)
-    ├── __init__.py
-    ├── chat.py          # 同学A负责：处理AI对话
-    ├── user.py          # 同学B负责：处理登录注册
-    └── practice.py      # 同学C负责：处理刷题逻辑
-|__ .env                 # 存放apikey，并且在git时被忽略，这样可以保证key的安全   
+├── main.py              # 程序入口：负责启动 FastAPI、注册路由、配置 CORS 跨域
+├── requirements.txt      # 依赖包列表：使用 pip install -r 运行
+├── .env                 # 环境变量（敏感信息）：绝对不要上传到 Git
+├── app/                 # 核心代码业务文件夹
+│   ├── core/            # 全局核心配置区
+│   │   ├── config.py    # 配置类：读取 .env 文件并映射到代码变量
+│   │   ├── security.py  # 安全模块：密码哈希加密、Token 校验
+│   │   └── deps.py      # 依赖注入：铁面保安，负责从 Token 中识别当前用户
+│   ├── db/              # 数据库引擎区
+│   │   └── database.py  # 负责连接 MySQL，创建数据库 Session 窗口
+│   ├── models/          # 数据库模型区 (SQLAlchemy)
+│   │   ├── user.py      # 用户表、聊天记录表结构定义
+│   ├── schemas/         # 数据验证区 (Pydantic)
+│   │   ├── user.py      # 规定注册、登录时前端传来的数据格式
+│   │   ├── chat.py      # 规定 AI 对话时的消息格式
+│   ├── crud/            # 数据库操作区 (Create/Read/Update/Delete)
+│   │   ├── crud_user.py # 专门写“增删改查”用户表的函数
+│   │   ├── crud_chat.py # 专门写存取聊天记录的函数
+│   └── api/             # 接口路由区
+│       ├── user.py      # 用户注册、登录接口
+│       ├── chat.py      # AI 流式对话接口
 
-数据库用的sqlite
+.env文件配置：
+# 1. 数据库连接地址 (格式: mysql+pymysql://用户名:密码@地址:端口/数据库名)
+实例：DATABASE_URL=mysql+pymysql://root:123456@127.0.0.1:3306/yantu_db
+//注意：需要首先创建一个MySQL数据库，名为yantu_db
+# 2. JWT 加密秘钥
+SECRET_KEY=yantu_buddy_2024_secure_key
+# 3. 大模型 API 配置 (根据你申请的Key填写)
+ZHIPU_API_KEY=你的智谱API密匙
