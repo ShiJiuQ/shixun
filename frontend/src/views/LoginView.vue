@@ -34,7 +34,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-// 👇 1. 告别直接 import axios，引入我们自己封装的业务 API
 import { authApi } from '../api/auth.js' 
 
 const router = useRouter()
@@ -47,7 +46,6 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
 
-// 切换登录/注册模式
 const toggleMode = () => {
   isLoginMode.value = !isLoginMode.value
   errorMessage.value = ''
@@ -61,23 +59,23 @@ const handleSubmit = async () => {
   
   try {
     if (isLoginMode.value) {
-      // 👇 2. 代码变得极其清爽，就像读英语句子一样
       const response = await authApi.login(username.value, password.value)
       
-      const token = response.data.access_token
-      localStorage.setItem('token', token)
-      router.push('/chat') // 登录成功，进大厅
+      // 🚀 1. 兼容获取 Token
+      const token = response.data.access_token || response.data.token
+      
+      // 🚀 2. 必须改成 sessionStorage！并且把用户名也存下来给画像用
+      sessionStorage.setItem('token', token)
+      sessionStorage.setItem('username', username.value)
+      
+      // 🚀 3. 跳转到根路径 '/'，让路由守卫去分配到底去哪
+      router.push('/') 
       
     } else {
-      // 👇 3. 注册也一样优雅
       const response = await authApi.register(username.value, password.value)
-      
-      // 注册成功后，绿字提示用户，并自动切回登录页面让他登录
-      // 如果后端没返回 msg，就给个兜底文案
-      successMessage.value = response.data.msg || '注册成功，请登录！' 
+      successMessage.value = response.data?.msg || '注册成功，请登录！' 
       isLoginMode.value = true 
     }
-    
   } catch (error) {
     if (error.response && error.response.data) {
       errorMessage.value = error.response.data.detail || '发生错误'

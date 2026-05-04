@@ -13,6 +13,7 @@ backend/.yantu/
 backend/*.db
 backend/*.sqlite
 backend/alembic/versions/
+backend/uploads/
 
 # 3. 编辑器及系统垃圾
 .vscode/

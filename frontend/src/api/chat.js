@@ -1,78 +1,127 @@
-// 如果以后你要写非流式的普通请求（比如获取聊天历史），可以直接用这个 request
-import request from '../utils/request' 
-
-// fetch 没法走 axios 拦截器，所以我们需要自己拼一下完整的后端地址
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+// frontend/src/api/chat.js
 
 export const chatApi = {
-  /**
-   * 流式聊天接口
-   * @param {string} message - 用户输入的消息
-   * @param {function} onMessage - 收到消息片段时的回调
-   * @param {function} onError - 发生错误时的回调
-   */
-  async streamChat(message, onMessage, onError) {
-    const token = localStorage.getItem('token')
-    
+  // 1. 获取当前用户的所有会话列表 (🌟 新增)
+  getSessions: async (userId) => {
     try {
-      // 🚨 关键修改：告别写死的 127.0.0.1，使用动态 baseURL
-      const response = await fetch(`${baseURL}/api/chat/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // fetch 需要手动带 Token
-        },
-        body: JSON.stringify({ message })
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // 触发后端的门禁机制
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-          throw new Error('登录过期，请重新登录')
-        }
-        throw new Error(`服务器响应异常: ${response.status}`)
-      }
-
-      // 下面全是你队友写的极其优秀的流式解析逻辑，原封不动保留！
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder('utf-8')
-      let buffer = '' 
-
-      while (true) {
-        const { done, value } = await reader.read()
-        
-        if (done) {
-          if (buffer.trim()) {
-            this.processLine(buffer, onMessage)
-          }
-          break
-        }
-
-        buffer += decoder.decode(value, { stream: true })
-        let lines = buffer.split('\n')
-        buffer = lines.pop() 
-
-        for (const line of lines) {
-          this.processLine(line, onMessage)
-        }
-      }
-    } catch (err) {
-      console.error('Stream Error:', err)
-      onError(err)
+      const response = await fetch(`http://127.0.0.1:8000/api/chat/sessions?user_id=${userId}`)
+      if (!response.ok) throw new Error('获取会话列表失败')
+      return await response.json()
+    } catch (error) {
+      console.error(error)
+      return []
     }
   },
 
-  processLine(line, onMessage) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed === 'data: [DONE]') return
+  // 2. 创建一个新会话 (🌟 新增)
+  createSession: async (userId) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/chat/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      })
+      if (!response.ok) throw new Error('创建会话失败')
+      return await response.json()
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  },
+  updateSession: async (sessionId, title) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title // 这里传我们新起的名字
+        })
+      })
+      if (!response.ok) throw new Error('修改会话失败')
+      return await response.json()
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  },
+  // 3. 获取会话的历史记录 (保持你原来的)
+  getHistory: async (sessionId) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${sessionId}/messages`)
+      if (!response.ok) throw new Error('获取历史记录失败')
+      return await response.json()
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  },
 
-    if (trimmed.startsWith('data: ')) {
-      const content = trimmed.substring(5).trim() 
-      if (content) onMessage(content)
-    } else {
-      onMessage(trimmed)
+  uploadFile: async (file) => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file) 
+
+      const response = await fetch('http://127.0.0.1:8000/api/chat/upload', {
+        method: 'POST',
+        body: formData // 用 FormData 上传，浏览器会自动处理 headers
+      })
+      
+      if (!response.ok) throw new Error('文件上传失败')
+      return await response.json() 
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  },
+  
+  // 4. 发送流式对话请求 (保持你原来的)
+  streamChat: async (sessionId, text, onChunk, onError) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/chat/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          content: text,
+          role: 'user',
+          message_type: 'text'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 解析 SSE 流
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n\n');
+        
+        for (let line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              return; // 结束推流
+            } else if (data.startsWith('[ERROR]')) {
+              if (onError) onError(new Error(data));
+              return;
+            } else {
+              // 把每一个字传给 Vue 的回调函数去渲染
+              if (onChunk) onChunk(data);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (onError) onError(error);
     }
   }
 }
