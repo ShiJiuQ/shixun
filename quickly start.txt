@@ -69,3 +69,5 @@ backend/
 SECRET_KEY=yantu_buddy_2024_secure_key
 # 3. 大模型 API 配置 (根据你申请的Key填写)
 ZHIPU_API_KEY=你的智谱API密匙
+
+4/29更新问题：记得提前启动mysql
