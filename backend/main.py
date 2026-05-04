@@ -1,12 +1,37 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import chat, auth 
+from api import chat, auth, profile, practice, plan, emotion
 from app.db.database import engine, Base
-from app.models.user import User, ChatMessage
+from app.models.user import User
+from fastapi import FastAPI, UploadFile, File
+from app.models.chat import ChatSession, ChatMessage
+from fastapi.staticfiles import StaticFiles
+import os
+import shutil
 
-# 【一键建表】在 MySQL 中自动创建所有继承了 Base 的表
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+
+# 自动创建一个存放文件的 uploads 文件夹，并挂载为静态目录
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+#  新增上传接口
+@app.post("/api/chat/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        # 将文件保存到 uploads 目录下
+        file_location = f"uploads/{file.filename}"
+        with open(file_location, "wb+") as file_object:
+            shutil.copyfileobj(file.file, file_object)
+
+        # 返回可以在浏览器中直接访问的 URL
+        file_url = f"http://127.0.0.1:8000/{file_location}"
+        return {"url": file_url, "filename": file.filename}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,3 +44,39 @@ app.add_middleware(
 # 告诉主程序：所有以 /api/chat 开头的请求，都交给 chat.py 去处理
 app.include_router(chat.router, prefix="/api/chat", tags=["AI对话模块"])
 app.include_router(auth.router, prefix="/api/auth", tags=["用户认证"])
+app.include_router(profile.router, prefix="/api/profile", tags=["个人画像模块"])
+app.include_router(plan.router, prefix="/api/plan", tags=["学习计划模块"])
+app.include_router(emotion.router, prefix="/api/emotion", tags=["情绪疗愈模块"])
+from core.exam_system.controllers import submit_controller,paper_controller, exam_controller,question_controller,wrong_controller
+
+app.include_router(
+    paper_controller.router,
+    prefix="/api/exam",
+    tags=["真题模块"]
+)
+
+app.include_router(
+    exam_controller.router,
+    prefix="/api/exam",
+    tags=["真题模块"]
+)
+
+app.include_router(
+    submit_controller.router,
+    prefix="/api/exam",
+    tags=["真题模块"]
+)
+
+app.include_router(
+    question_controller.router,
+    prefix="/api/exam",
+    tags=["真题模块"]
+)
+
+app.include_router(
+    wrong_controller.router,
+    prefix="/api/exam",
+    tags=["真题模块"]
+)
+
+app.mount("/images", StaticFiles(directory="images"), name="images")
