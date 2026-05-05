@@ -1,10 +1,16 @@
 from fastapi.middleware.cors import CORSMiddleware
 from api import chat, auth, profile, plan, emotion
 from app.db.database import engine, Base
+from core.exam_system.models.exam_session import ExamSession
+from core.common.models.question import Question
+from core.common.models.record import Record
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 import os
 import shutil
+from core.exam_system.api import exam
+from core.exam_system.api import wrong
+from core.exam_system.api import stats
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -44,8 +50,6 @@ app.include_router(auth.router, prefix="/api/auth", tags=["用户认证"])
 app.include_router(profile.router, prefix="/api/profile", tags=["个人画像模块"])
 app.include_router(plan.router, prefix="/api/plan", tags=["学习计划模块"])
 app.include_router(emotion.router, prefix="/api/emotion", tags=["情绪疗愈模块"])
-from core.exam_system.api import exam
-from backend.core.exam_system.api import wrong
 
 app.include_router(
     exam.router,
@@ -54,9 +58,16 @@ app.include_router(
 )
 
 app.include_router(
-    wrong.router,
+    stats.router,
     prefix="/api/exam",
     tags=["真题模块"]
 )
+
+app.include_router(
+    wrong.router,
+    prefix="/api/exam",
+    tags=["错题"]
+)
+
 
 app.mount("/images", StaticFiles(directory="images"), name="images")

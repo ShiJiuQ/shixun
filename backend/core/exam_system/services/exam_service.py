@@ -1,6 +1,6 @@
 #套卷提交
 def submit_exam(db, user_id, answers: list):
-    from app.models.question import Question
+    from core.common.models.question import Question
     from core.exam_system.crud.crud_record import save_record
 
     total_score = 0

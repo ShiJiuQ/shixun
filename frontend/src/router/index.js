@@ -36,6 +36,21 @@ const router = createRouter({
           name: 'study-plan',
           component: () => import('../views/PlanView.vue')
         },
+         {
+          path: 'exam',
+          name: 'exam',
+          component: () => import('../views/ExamView.vue')
+        },
+        {
+          path: 'wrong',
+          name: 'wrong',
+          component: () => import('../views/WrongView.vue')
+        },
+        {
+          path: 'stats',
+          name: 'stats',
+          component: () => import('../views/StatsView.vue')
+        },
         {
           path: 'emotion',
           name: 'emotion',

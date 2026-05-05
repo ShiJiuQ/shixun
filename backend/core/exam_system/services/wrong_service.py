@@ -52,3 +52,60 @@ def get_wrong_list(db, user_id, page=1, page_size=10):
         "total": total,
         "list": result
     }
+
+def get_wrong_practice(db, user_id, limit=10):
+    total, rows = get_wrong_records_with_question(
+        db, user_id, offset=0, limit=limit
+    )
+
+    result = []
+    for record, question in rows:
+        result.append({
+            "question_id": question.id,
+            "question_content": question.question_content,
+            "options": question.options,
+            "knowledge_point": question.knowledge_point
+        })
+
+    return result
+
+from core.common.utils.judge import judge
+from core.exam_system.crud.crud_question import get_question_by_id
+from core.exam_system.services.record_service import create_record
+
+
+def submit_wrong_practice(db, user_id, answers):
+    results = []
+
+    for item in answers:
+        qid = item["question_id"]
+        user_answer = item["answer"]
+
+        q = get_question_by_id(db, qid)
+
+        is_correct = False
+        score = 0
+
+        if q.question_type == "单项选择题":
+            is_correct = (user_answer == q.standard_answer)
+            score = 1 if is_correct else 0
+
+        # ⭐ 注意这里 mode = wrong
+        create_record(
+            db,
+            user_id,
+            q,
+            is_correct,
+            score,
+            mode="wrong",
+            paper_id=None
+        )
+
+        results.append({
+            "question_id": qid,
+            "is_correct": is_correct,
+            "correct_answer": q.standard_answer,
+            "analysis": q.analysis_content
+        })
+
+    return results

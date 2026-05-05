@@ -1,9 +1,10 @@
 def judge(question: dict, user_answer: str):
-    q_type = question.get("question_type")
+
+    q_type = question.question_type
 
     # 单选
     if q_type == "单项选择题":
-        correct = user_answer == question.get("standard_answer")
+        correct = user_answer == question.standard_answer
         return {
             "is_correct": correct,
             "score": 2 if correct else 0,
@@ -16,6 +17,8 @@ def judge(question: dict, user_answer: str):
         "score": 0,
         "full_score": question.get("full_score", 10)
     }
+
+
 
 
 # core/common/utils/judge.py 补充

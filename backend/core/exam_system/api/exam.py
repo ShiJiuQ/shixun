@@ -55,14 +55,3 @@ def submit_practice_answer(data: dict, db: Session = Depends(get_db)):
     if result is None:
         return error("question not found")
     return success(result)
-
-# -------------------------- 错题相关 --------------------------
-@router.get("/wrong")
-def get_wrong_questions(
-    user_id: str = Query(..., description="用户ID"),
-    page: int = 1,
-    page_size: int = 10,
-    db: Session = Depends(get_db)
-):
-    data = wrong_service.get_wrong_list(db, user_id, page, page_size)
-    return success(data)
