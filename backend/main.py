@@ -1,10 +1,7 @@
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import chat, auth, profile, practice, plan, emotion
+from api import chat, auth, profile, plan, emotion
 from app.db.database import engine, Base
-from app.models.user import User
 from fastapi import FastAPI, UploadFile, File
-from app.models.chat import ChatSession, ChatMessage
 from fastapi.staticfiles import StaticFiles
 import os
 import shutil
@@ -47,34 +44,17 @@ app.include_router(auth.router, prefix="/api/auth", tags=["用户认证"])
 app.include_router(profile.router, prefix="/api/profile", tags=["个人画像模块"])
 app.include_router(plan.router, prefix="/api/plan", tags=["学习计划模块"])
 app.include_router(emotion.router, prefix="/api/emotion", tags=["情绪疗愈模块"])
-from core.exam_system.controllers import submit_controller,paper_controller, exam_controller,question_controller,wrong_controller
+from core.exam_system.api import exam
+from backend.core.exam_system.api import wrong
 
 app.include_router(
-    paper_controller.router,
+    exam.router,
     prefix="/api/exam",
     tags=["真题模块"]
 )
 
 app.include_router(
-    exam_controller.router,
-    prefix="/api/exam",
-    tags=["真题模块"]
-)
-
-app.include_router(
-    submit_controller.router,
-    prefix="/api/exam",
-    tags=["真题模块"]
-)
-
-app.include_router(
-    question_controller.router,
-    prefix="/api/exam",
-    tags=["真题模块"]
-)
-
-app.include_router(
-    wrong_controller.router,
+    wrong.router,
     prefix="/api/exam",
     tags=["真题模块"]
 )

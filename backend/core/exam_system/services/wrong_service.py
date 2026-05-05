@@ -1,5 +1,5 @@
 import json
-from core.exam_system.dao.record_dao import get_wrong_records_with_question
+from core.exam_system.crud.crud_record import get_wrong_records_with_question
 
 
 def get_wrong_list(db, user_id, page=1, page_size=10):
